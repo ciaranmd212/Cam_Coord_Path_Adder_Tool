@@ -41,6 +41,7 @@ import java.net.MalformedURLException;
 import java.net.ProtocolException;
 import java.net.URL;
 
+import javax.net.ssl.HttpsURLConnection;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
@@ -57,7 +58,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-public class CamCoordYmlEditor implements ActionListener{
+public class CamCoordYamlEditor implements ActionListener{
 	
 	//Java Swing GUI elements.
 	JFrame frame;
@@ -65,7 +66,7 @@ public class CamCoordYmlEditor implements ActionListener{
 	JTextField username;
 	JPasswordField password;
 	
-	public CamCoordYmlEditor() {
+	public CamCoordYamlEditor() {
 		
 		frame = new JFrame();
 
@@ -125,7 +126,7 @@ public class CamCoordYmlEditor implements ActionListener{
 	
 	public static void main(String[] args) {
 		
-		new CamCoordYmlEditor();
+		new CamCoordYamlEditor();
 		
 	}//end main
 	
@@ -357,7 +358,7 @@ public class CamCoordYmlEditor implements ActionListener{
 		int userid = 0;
 		
 		//1.) Login and record the userid value.
-		String restUrl = "http://172.166.189.197:8081/Accounts/getbyusername?username="+usernameInput;
+		String restUrl = "https://c20384993fyp.uksouth.cloudapp.azure.com/Accounts/getbyusername?username="+usernameInput;
 	    URL restUrlObject = null;
 	     
 		try {
@@ -368,10 +369,10 @@ public class CamCoordYmlEditor implements ActionListener{
 		}
 
 		//Create the REST connection.
-	    HttpURLConnection restConnection = null;
+	    HttpsURLConnection restConnection = null;
 
 		try {
-			restConnection = (HttpURLConnection) restUrlObject.openConnection();
+			restConnection = (HttpsURLConnection) restUrlObject.openConnection();
 		} catch (IOException e1) {
 			e1.printStackTrace();
 		}
@@ -461,7 +462,7 @@ public class CamCoordYmlEditor implements ActionListener{
 		
 		//2.) Check for all of the camera entries for the user.
 		//Call the getCameras method and pass the URL.
-		JSONArray jsonArray = getCameras("http://172.166.189.197:8081/Cameras/findall?userid="+userid);
+		JSONArray jsonArray = getCameras("https://c20384993fyp.uksouth.cloudapp.azure.com/Cameras/findall?userid="+userid);
 		
 		//3.) Edit the mediamtx.yml file to include new paths for all cameras in the user's account.
 		editFiles(jsonArray);
