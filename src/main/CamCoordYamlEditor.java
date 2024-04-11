@@ -40,6 +40,9 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.ProtocolException;
 import java.net.URL;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.Base64;
 
 import javax.net.ssl.HttpsURLConnection;
 import javax.swing.BorderFactory;
@@ -65,6 +68,8 @@ public class CamCoordYamlEditor implements ActionListener{
 	JPanel panel;
 	JTextField username;
 	JPasswordField password;
+	JButton button;
+	JButton helpButton;
 	
 	public CamCoordYamlEditor() {
 		
@@ -76,10 +81,14 @@ public class CamCoordYamlEditor implements ActionListener{
 	    JLabel imageLabel = new JLabel(imageIcon);
 	    imageLabel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10)); // Set margins for the image
 
-	    //Add button and text fields.
-	    JButton button = new JButton("Add Camera Paths");
+	    //Add buttons and text fields.
+	    button = new JButton("Login");
 	    button.setPreferredSize(new Dimension(170, 40));
 	    button.addActionListener(this);
+	    
+	    helpButton = new JButton("Help");
+	    helpButton.setPreferredSize(new Dimension(170, 40));
+	    helpButton.addActionListener(this);
 
 	    username = new HintTextField("Username"); // Use HintTextField instead of JTextField, to indicate what user should enter.
 	    username.setPreferredSize(new Dimension(250, 40));
@@ -109,6 +118,12 @@ public class CamCoordYamlEditor implements ActionListener{
 	    buttonPanel.add(button);
 	    buttonPanel.setBackground(Color.WHITE);
 	    panel.add(buttonPanel);
+	    
+	    //Create a panel to hold the help button and then center it.
+	    JPanel helpButtonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+	    helpButtonPanel.add(helpButton);
+	    helpButtonPanel.setBackground(Color.WHITE);
+	    panel.add(helpButtonPanel);
 
 	    //Set background color of JFrame content pane to White.
 	    panel.setBackground(Color.WHITE);
@@ -121,6 +136,7 @@ public class CamCoordYamlEditor implements ActionListener{
 	    frame.pack();
 	    frame.setVisible(true);
 	    frame.setPreferredSize(new Dimension(400, 200));
+	    
 	}//end CamCoordYmlEditor
 	
 	
@@ -330,7 +346,7 @@ public class CamCoordYamlEditor implements ActionListener{
 	}//end getCameras
 
 	
-	//When the user clicks on the "Add Entries" button,
+	//When the user clicks on the "Add Paths" button,
 	//Check the account details are correct,
 	//Retrieve a list of the cameras added to the account,
 	//Write the camera path entries to the YML file,
@@ -338,6 +354,13 @@ public class CamCoordYamlEditor implements ActionListener{
 	//
 	@Override
 	public void actionPerformed(ActionEvent e) {
+		
+		if(e.getSource() == helpButton) {
+			JOptionPane.showMessageDialog(frame, "This is the Cam-Coord Remote Streaming Tool. By signing into your Cam-Coord account on this tool, it will make your cameras available to view remotely.");
+			JOptionPane.showMessageDialog(frame, "There are two text boxes. Enter your Cam-Coord username in the top box, and your password in the bottom one.");
+			JOptionPane.showMessageDialog(frame, "When you have entered your username and password, press 'Login'. This will start the relay program. Leave this program running to access your cameras outside of your home.");
+			return;
+		}
 
 		//Get username and password from text fields.
 		String usernameInput = username.getText().toString();
@@ -449,9 +472,13 @@ public class CamCoordYamlEditor implements ActionListener{
 			e1.printStackTrace();
 		}
 	    
+	    
 	    //Check if the passwords entered was correct.
+	    //Get the salt string from the database, decode it to a byte array.
 		try {
-			if(!passwordInput.equals(accountObject.getString("password"))) {
+			if(!hashPassword(passwordInput, 
+					Base64.getDecoder().decode(accountObject.getString("salt")))
+					.equals(accountObject.getString("password"))) {
 				JOptionPane.showMessageDialog(frame, "Incorrect password.");
 				return;
 			}
@@ -482,5 +509,35 @@ public class CamCoordYamlEditor implements ActionListener{
 	      }
 		
 		}//end actionPerformed
+	
+	
+	public static String hashPassword(String password, byte[] salt) {
+	        try {
+	            // Create MessageDigest instance for SHA-512
+	            MessageDigest md = MessageDigest.getInstance("SHA-512");
+	
+	            // Add salt bytes to digest
+	            md.update(salt);
+	
+	            // Add password bytes to digest
+	            md.update(password.getBytes());
+	
+	            // Get the hashed bytes
+	            byte[] hashedBytes = md.digest();
+	
+	            // Combine the salt and hashed password
+	            byte[] combined = new byte[salt.length + hashedBytes.length];
+	            System.arraycopy(salt, 0, combined, 0, salt.length);
+	            System.arraycopy(hashedBytes, 0, combined, salt.length, hashedBytes.length);
+	
+	            // Convert bytes to Base64 format
+	            return Base64.getEncoder().encodeToString(combined);
+	            
+	        } catch (NoSuchAlgorithmException e) {
+	            // Handle NoSuchAlgorithmException
+	            e.printStackTrace();
+	            return null;
+	        }
+	}//end hashPassword
 	
 }//end Main
